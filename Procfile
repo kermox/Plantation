@@ -1,0 +1,1 @@
+web: gunicorn plantation.wsgi --log-file -
