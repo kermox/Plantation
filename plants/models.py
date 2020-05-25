@@ -8,7 +8,7 @@ class UserMixin(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        null=Fasle,
+        null=False,
         blank=False,
         verbose_name='User',
         help_text='',
@@ -19,7 +19,7 @@ class UserMixin(models.Model):
         abstract = True
 
 
-class Category(models.Model, UserMixin):
+class NameDescriptionMixin(models.Model):
 
     name = models.CharField(
         max_length=50,
@@ -28,8 +28,6 @@ class Category(models.Model, UserMixin):
         verbose_name="Name",
         help_text='',
     )
-
-    slug = models.SlugField()
 
     description = models.CharField(
         max_length=150,
@@ -40,40 +38,34 @@ class Category(models.Model, UserMixin):
 
     )
 
+    class Meta:
+        abstract = True
+
+
+class ImageMixin(models.Model):
+
     image_url = models.URLField(
         verbose_name="Image URL",
         help_text='',
     )
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.PROTECT,
-        null=Fasle,
-        blank=False,
-        verbose_name='User',
-        help_text='',
-
-    )
+    class Meta:
+        abstract = True
 
 
-class Plant(models.Model, UserMixin):
+class Category(UserMixin, NameDescriptionMixin, ImageMixin, models.Model):
+    slug = models.SlugField(unique=True)
 
-    name = models.CharField(
-        max_length=50,
-        null=False,
-        blank=False,
-        verbose_name="Name",
-        help_text='',
-    )
+    def __str__(self):
+        return self.name
+
+
+class Plant(UserMixin, NameDescriptionMixin, models.Model):
 
     category = models.ForeignKey(
         Category,
         on_delete=models.PROTECT,
-        null=Fasle,
-        blank=False,
-        verbose_name='Category',
-        help_text='',
-
+        default=''
     )
 
     watering_interval = models.PositiveIntegerField(
@@ -157,49 +149,29 @@ class Plant(models.Model, UserMixin):
     )
 
 
-class Room(models.Model, UserMixin):
-    name = models.CharField(
-        max_length=50,
-        null=False,
-        blank=False,
-        verbose_name="Name",
-        help_text='',
-    )
+class Room(UserMixin, NameDescriptionMixin, models.Model):
 
-    EXPOSURE_CHOICES = [
-        ('dark', 'Dark'),
-        ('shade', 'Shade'),
-        ('partsun', 'Part Sun'),
-        ('fullsun', 'Full Sun'),
-    ]
+    EXPOSURE_CHOICES = Plant.EXPOSURE_CHOICES
 
-    room_exposure = models.CharField(
+    exposure = models.CharField(
         max_length=10, choices=EXPOSURE_CHOICES,
         null=False, blank=False,
         verbose_name='Amount of sun in the room',
         help_text=''
     )
 
-    HUMIDITY_CHOICES = [
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High'),
-    ]
+    HUMIDITY_CHOICES = Plant.HUMIDITY_CHOICES
 
-    room_humidity = models.CharField(
+    humidity = models.CharField(
         max_length=10, choices=HUMIDITY_CHOICES,
         null=False, blank=False,
         verbose_name='Humidity in the room',
         help_text=''
     )
 
-    TEMPERATURE_CHOICES = [
-        ('cold', 'Cold'),
-        ('medium', 'Medium'),
-        ('warm', 'Warm'),
-    ]
+    TEMPERATURE_CHOICES = Plant.TEMPERATURE_CHOICES
 
-    room_temperature = models.CharField(
+    temperature = models.CharField(
         max_length=10, choices=TEMPERATURE_CHOICES,
         null=False, blank=False,
         verbose_name='Temperature in the room',
@@ -210,38 +182,33 @@ class Room(models.Model, UserMixin):
         default=False,
         null=False,
         blank=False,
+        verbose_name='Drafty?',
         help_text=''
     )
 
 
-class UserPlant(models.Model, UserMixin):
-
-    name = models.CharField(
-        max_length=50,
-        null=False,
-        blank=False,
-        verbose_name="Name",
-        help_text='',
-    )
-
-    description = models.CharField(
-        max_length=150,
-        blank=True,
-        verbose_name="Description",
-        help_text='',
-        default='',
-    )
+class UserPlant(UserMixin, NameDescriptionMixin, ImageMixin, models.Model):
 
     room = models.ForeignKey(
         Room,
         on_delete=models.PROTECT,
+        verbose_name='Room'
     )
 
     plant = models.ForeignKey(
         Plant,
         on_delete=models.PROTECT,
+        verbose_name='Type of plant',
     )
 
-    last_watering = models.DateTimeField()
+    last_watered = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Timestamp of last watering',
+    )
 
-    last_fertilizing = models.DateTimeField()
+    last_fertilized = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Timestamp of last fertilizing',
+    )
