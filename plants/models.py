@@ -44,6 +44,8 @@ class NameDescriptionMixin(models.Model):
 class ImageMixin(models.Model):
 
     image_url = models.URLField(
+        blank=True,
+        default='',
         verbose_name="Image URL",
         help_text='',
     )
